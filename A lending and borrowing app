@@ -1,0 +1,126 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
+contract LendingPool is ReentrancyGuard {
+    IERC20 public token; // ERC-20 token (e.g., DAI)
+    mapping(address => uint256) public balances; // User deposits
+    uint256 public totalDeposits;
+
+    constructor(address _token) {
+        token = IERC20(_token);
+    }
+
+    // Deposit tokens to lend
+    function deposit(uint256 amount) external nonReentrant {
+        require(amount > 0, "Amount must be greater than 0");
+        token.transferFrom(msg.sender, address(this), amount);
+        balances[msg.sender] += amount;
+        totalDeposits += amount;
+    }
+
+    // Withdraw lent tokens
+    function withdraw(uint256 amount) external nonReentrant {
+        require(balances[msg.sender] >= amount, "Insufficient balance");
+        balances[msg.sender] -= amount;
+        totalDeposits -= amount;
+        token.transfer(msg.sender, amount);
+    }
+}
+
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import "./LendingPool.sol";
+
+contract Borrowing {
+    IERC20 public collateralToken; // Collateral token (e.g., ETH)
+    IERC20 public borrowToken; // Token to borrow (e.g., DAI)
+    LendingPool public lendingPool;
+    AggregatorV3Interface public priceFeed; // Chainlink price oracle
+
+    mapping(address => uint256) public collateralBalances;
+    mapping(address => uint256) public borrowedAmounts;
+    uint256 public constant LIQUIDATION_THRESHOLD = 150; // 150% collateralization ratio
+    uint256 public constant INTEREST_RATE = 5; // 5% fixed interest (simplified)
+
+    constructor(address _collateralToken, address _borrowToken, address _lendingPool, address _priceFeed) {
+        collateralToken = IERC20(_collateralToken);
+        borrowToken = IERC20(_borrowToken);
+        lendingPool = LendingPool(_lendingPool);
+        priceFeed = AggregatorV3Interface(_priceFeed);
+    }
+
+    // Deposit collateral and borrow tokens
+    function borrow(uint256 collateralAmount, uint256 borrowAmount) external {
+        require(collateralAmount > 0 && borrowAmount > 0, "Invalid amounts");
+        uint256 collateralValue = getCollateralValue(collateralAmount);
+        require(collateralValue >= (borrowAmount * LIQUIDATION_THRESHOLD) / 100, "Insufficient collateral");
+
+        collateralToken.transferFrom(msg.sender, address(this), collateralAmount);
+        collateralBalances[msg.sender] += collateralAmount;
+        borrowedAmounts[msg.sender] += borrowAmount;
+
+        borrowToken.transfer(msg.sender, borrowAmount);
+    }
+
+    // Repay borrowed tokens
+    function repay(uint256 amount) external {
+        require(borrowedAmounts[msg.sender] >= amount, "Invalid repay amount");
+        uint256 interest = (amount * INTEREST_RATE) / 100;
+        borrowToken.transferFrom(msg.sender, address(this), amount + interest);
+        borrowedAmounts[msg.sender] -= amount;
+    }
+
+    // Get collateral value using Chainlink price feed
+    function getCollateralValue(uint256 amount) internal view returns (uint256) {
+        (, int256 price,,,) = priceFeed.latestRoundData();
+        return (amount * uint256(price)) / 1e8; // Adjust for price feed decimals
+    }
+
+    // Liquidation (simplified)
+    function liquidate(address user) external {
+        uint256 collateralValue = getCollateralValue(collateralBalances[user]);
+        uint256 borrowedValue = borrowedAmounts[user];
+        require(collateralValue < (borrowedValue * LIQUIDATION_THRESHOLD) / 100, "Not undercollateralized");
+
+        uint256 collateralToLiquidate = collateralBalances[user];
+        collateralBalances[user] = 0;
+        borrowedAmounts[user] = 0;
+        collateralToken.transfer(msg.sender, collateralToLiquidate); // Liquidator takes collateral
+    }
+}
+
+interest = borrowedAmount * (interestRate * timeElapsed) / (365 days * blocksPerDay)
+
+import { ethers } from "ethers";
+
+const provider = new ethers.BrowserProvider(window.ethereum);
+const signer = await provider.getSigner();
+const lendingPool = new ethers.Contract(lendingPoolAddress, lendingPoolABI, signer);
+
+async function deposit(amount) {
+    const tx = await lendingPool.deposit(ethers.parseUnits(amount, 18));
+    await tx.wait();
+}
+
+const { expect } = require("chai");
+
+describe("LendingPool", function () {
+    it("should allow deposits", async function () {
+        const [user] = await ethers.getSigners();
+        const lendingPool = await ethers.deployContract("LendingPool", [tokenAddress]);
+        await token.connect(user).approve(lendingPool, 100);
+        await lendingPool.deposit(100);
+        expect(await lendingPool.balances(user.address)).to.equal(100);
+    });
+});
+
+const LendingPool = await ethers.deployContract("LendingPool", [tokenAddress]);
+await LendingPool.waitForDeployment();
+console.log("LendingPool deployed to:", LendingPool.target);
+
