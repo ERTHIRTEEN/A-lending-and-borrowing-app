@@ -108,19 +108,5 @@ async function deposit(amount) {
     await tx.wait();
 }
 
-const { expect } = require("chai");
 
-describe("LendingPool", function () {
-    it("should allow deposits", async function () {
-        const [user] = await ethers.getSigners();
-        const lendingPool = await ethers.deployContract("LendingPool", [tokenAddress]);
-        await token.connect(user).approve(lendingPool, 100);
-        await lendingPool.deposit(100);
-        expect(await lendingPool.balances(user.address)).to.equal(100);
-    });
-});
-
-const LendingPool = await ethers.deployContract("LendingPool", [tokenAddress]);
-await LendingPool.waitForDeployment();
-console.log("LendingPool deployed to:", LendingPool.target);
 
