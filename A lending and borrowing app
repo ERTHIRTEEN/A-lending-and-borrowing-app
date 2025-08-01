@@ -95,18 +95,7 @@ contract Borrowing {
     }
 }
 
-interest = borrowedAmount * (interestRate * timeElapsed) / (365 days * blocksPerDay)
 
-import { ethers } from "ethers";
-
-const provider = new ethers.BrowserProvider(window.ethereum);
-const signer = await provider.getSigner();
-const lendingPool = new ethers.Contract(lendingPoolAddress, lendingPoolABI, signer);
-
-async function deposit(amount) {
-    const tx = await lendingPool.deposit(ethers.parseUnits(amount, 18));
-    await tx.wait();
-}
 
 
 
