@@ -82,18 +82,7 @@ contract Borrowing {
         return (amount * uint256(price)) / 1e8; // Adjust for price feed decimals
     }
 
-    // Liquidation (simplified)
-    function liquidate(address user) external {
-        uint256 collateralValue = getCollateralValue(collateralBalances[user]);
-        uint256 borrowedValue = borrowedAmounts[user];
-        require(collateralValue < (borrowedValue * LIQUIDATION_THRESHOLD) / 100, "Not undercollateralized");
-
-        uint256 collateralToLiquidate = collateralBalances[user];
-        collateralBalances[user] = 0;
-        borrowedAmounts[user] = 0;
-        collateralToken.transfer(msg.sender, collateralToLiquidate); // Liquidator takes collateral
-    }
-}
+    
 
 
 
