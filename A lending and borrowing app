@@ -76,12 +76,7 @@ contract Borrowing {
         borrowedAmounts[msg.sender] -= amount;
     }
 
-    // Get collateral value using Chainlink price feed
-    function getCollateralValue(uint256 amount) internal view returns (uint256) {
-        (, int256 price,,,) = priceFeed.latestRoundData();
-        return (amount * uint256(price)) / 1e8; // Adjust for price feed decimals
-    }
-
+  
     
 
 
