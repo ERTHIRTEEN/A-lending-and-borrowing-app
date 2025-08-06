@@ -68,13 +68,7 @@ contract Borrowing {
         borrowToken.transfer(msg.sender, borrowAmount);
     }
 
-    // Repay borrowed tokens
-    function repay(uint256 amount) external {
-        require(borrowedAmounts[msg.sender] >= amount, "Invalid repay amount");
-        uint256 interest = (amount * INTEREST_RATE) / 100;
-        borrowToken.transferFrom(msg.sender, address(this), amount + interest);
-        borrowedAmounts[msg.sender] -= amount;
-    }
+
 
   
     
