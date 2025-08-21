@@ -1,0 +1,12 @@
+  // Deposit collateral and borrow tokens
+    function borrow(uint256 collateralAmount, uint256 borrowAmount) external {
+        require(collateralAmount > 0 && borrowAmount > 0, "Invalid amounts");
+        uint256 collateralValue = getCollateralValue(collateralAmount);
+        require(collateralValue >= (borrowAmount * LIQUIDATION_THRESHOLD) / 100, "Insufficient collateral");
+
+        collateralToken.transferFrom(msg.sender, address(this), collateralAmount);
+        collateralBalances[msg.sender] += collateralAmount;
+        borrowedAmounts[msg.sender] += borrowAmount;
+
+        borrowToken.transfer(msg.sender, borrowAmount);
+    }
