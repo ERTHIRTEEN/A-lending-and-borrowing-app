@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 contract LendingPool is ReentrancyGuard {
     IERC20 public token; // ERC-20 token (e.g., DAI)
-    mapping(address => uint256) public balances; // User deposits
+    mapping(address => unit256) public balances; // User deposits
     uint256 public totalDeposits;
 
     constructor(address _token) {
